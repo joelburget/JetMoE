@@ -81,8 +81,11 @@ class top_k_gating(nn.Module):
         """
 
         logits = self.layer(x).float()
-        top_k_logits, top_k_indices = (-logits).topk(self.top_k, dim=1)
-        top_k_logits *= -1
+        # take the top k + 2 experts
+        top_k2_logits, top_k2_indices = logits.topk(self.top_k + 2, dim=1)
+        # now remove the top two experts
+        top_k_logits = top_k2_logits[:, 2:]
+        top_k_indices = top_k2_indices[:, 2:]
         top_k_gates = torch.softmax(top_k_logits, dim=1).type_as(x)
 
         if self.training:
